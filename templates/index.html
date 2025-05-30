@@ -1,0 +1,27 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Login</h1>
+    <form action="/login" method="post">
+      Username: <input name="username"><br>
+      Password: <input type="password" name="password"><br>
+      <button type="submit">Login</button>
+    </form>
+
+    <h2>Ping a host</h2>
+    <form action="/ping" method="get">
+      Host: <input name="host"><button type="submit">Ping</button>
+    </form>
+
+    <h2>Calculator</h2>
+    <form action="/calc" method="post">
+      Expr: <input name="expr"><button type="submit">Calc</button>
+    </form>
+
+    <h2>Upload Pickle</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      File: <input type="file" name="file"><button type="submit">Upload</button>
+    </form>
+  </body>
+</html>
