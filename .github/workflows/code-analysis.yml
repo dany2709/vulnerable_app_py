@@ -1,0 +1,68 @@
+name: Code Analysis
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create ZIP file
+        run: |
+          zip -r repo.zip . -x "node_modules/*" "temp/*" ".git/*" "public/reports/*"
+          echo "ZIP file created successfully"
+
+      - name: Send to Analysis Service
+        id: analysis
+        run: |
+          # Send the ZIP file to your analysis service
+          RESPONSE=$(curl -s -X POST \
+            -F "zipFile=@repo.zip" \
+           https://backend.incodeporate.com/api/analysis)
+
+          # Extract report URL from response
+          REPORT_URL=$(echo $RESPONSE | jq -r '.data.report.url')
+
+          # Save to output
+          echo "report_url=$REPORT_URL" >> $GITHUB_OUTPUT
+          echo "Analysis completed successfully"
+
+      - name: Comment on PR with Report Link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const reportUrl = '${{ steps.analysis.outputs.report_url }}';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Code Analysis Completed 🔍
+              
+              Your code has been analyzed! View the detailed report here:
+              
+              [📊 View Analysis Report](${reportUrl})
+              
+              This report includes:
+              - Language detection
+              - Security vulnerabilities
+              - Dependency analysis
+              `
+            });
+
+      - name: Display Report Link
+        run: |
+          echo "✅ Code Analysis Completed"
+          echo "📊 Report URL: ${{ steps.analysis.outputs.report_url }}"
